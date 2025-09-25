@@ -8,54 +8,67 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
-@TeleOp(name = "TeleOp2526_FieldCentric")
+/**
+ * This opmode demonstrates how one would implement field centric control using
+ * `SampleMecanumDrive.java`. This file is essentially just `TeleOpDrive.java` with the addition of
+ * field centric control. To achieve field centric control, the only modification one needs is to
+ * rotate the input vector by the current heading before passing it into the inverse kinematics.
+ * <p>
+ * See lines 42-57.
+ */
+@TeleOp(name = "TeleOp2526")
 public class TeleOp2526 extends LinearOpMode {
-
     @Override
     public void runOpMode() throws InterruptedException {
-
+        // Initialize SampleMecanumDrive
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        float speed = 0.75f;
-
+        // We want to turn off velocity control for teleop
+        // Velocity control per wheel is not necessary outside of motion profiled auto
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+//        // Retrieve our pose from the PoseStorage.currentPose static field
+//        // See AutoTransferPose.java for further details
+//        drive.setPoseEstimate(PoseStorage.currentPose);
+
+        drive.setPoseEstimate(new Pose2d(
+                drive.getPoseEstimate().getX(),
+                drive.getPoseEstimate().getY(),
+                0  // reset heading to zero
+        ));
 
         waitForStart();
 
         if (isStopRequested()) return;
 
         while (opModeIsActive() && !isStopRequested()) {
-            // Get the current pose (position + heading)
+            // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
-            // Joystick inputs (translation)
-            double forward = -gamepad1.left_stick_y * speed; // forward/back
-            double strafe  = -gamepad1.left_stick_x * speed; // strafe left/right
-            double rotate  = -gamepad1.right_stick_x * speed; // rotation
+            // Create a vector from the gamepad x/y inputs
+            // Then, rotate that vector by the inverse of that heading
+            Vector2d input = new Vector2d(
+                    -gamepad1.left_stick_y,
+                    -gamepad1.left_stick_x
+            ).rotated(-poseEstimate.getHeading());
 
-            // Create input vector
-            Vector2d input = new Vector2d(strafe, forward);
-
-            // Rotate by inverse of heading for field-centric control
-            input = input.rotated(-poseEstimate.getHeading());
-
-            // Apply movement
+            // Pass in the rotated input + right stick value for rotation
+            // Rotation is not part of the rotated input thus must be passed in separately
             drive.setWeightedDrivePower(
                     new Pose2d(
                             input.getX(),
                             input.getY(),
-                            rotate
+                            -gamepad1.right_stick_x
                     )
             );
 
-            // Update Road Runner localization
+            // Update everything. Odometry. Etc.
             drive.update();
 
-            // Telemetry
+            // Print pose to telemetry
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
-            telemetry.addData("heading (rad)", poseEstimate.getHeading());
-            telemetry.addData("heading (deg)", Math.toDegrees(poseEstimate.getHeading()));
+            telemetry.addData("heading", poseEstimate.getHeading());
             telemetry.update();
         }
     }
