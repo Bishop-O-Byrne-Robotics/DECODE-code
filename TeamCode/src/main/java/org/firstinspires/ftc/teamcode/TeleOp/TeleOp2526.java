@@ -8,52 +8,55 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
-@TeleOp(group = "advanced")
+@TeleOp(name = "TeleOp2526_FieldCentric")
 public class TeleOp2526 extends LinearOpMode {
+
     @Override
     public void runOpMode() throws InterruptedException {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        float speed = 0.75F;
+        float speed = 0.75f;
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        drive.setPoseEstimate(PoseStorage.currentPose);
 
         waitForStart();
 
         if (isStopRequested()) return;
 
         while (opModeIsActive() && !isStopRequested()) {
-            // Read pose
+            // Get the current pose (position + heading)
             Pose2d poseEstimate = drive.getPoseEstimate();
 
-            // Create a vector from the gamepad x/y inputs
-            // Then, rotate that vector by the inverse of that heading
-            Vector2d input = new Vector2d(
-                    -gamepad1.left_stick_y * speed,
-                    -gamepad1.left_stick_x * speed
-            ).rotated(-poseEstimate.getHeading());
+            // Joystick inputs (translation)
+            double forward = -gamepad1.left_stick_y * speed; // forward/back
+            double strafe  = -gamepad1.left_stick_x * speed; // strafe left/right
+            double rotate  = -gamepad1.right_stick_x * speed; // rotation
 
-            // Pass in the rotated input + right stick value for rotation
-            // Rotation is not part of the rotated input thus must be passed in separately
+            // Create input vector
+            Vector2d input = new Vector2d(strafe, forward);
+
+            // Rotate by inverse of heading for field-centric control
+            input = input.rotated(-poseEstimate.getHeading());
+
+            // Apply movement
             drive.setWeightedDrivePower(
                     new Pose2d(
                             input.getX(),
                             input.getY(),
-                            -gamepad1.right_stick_x
+                            rotate
                     )
             );
 
-            // Update everything. Odometry. Etc.
+            // Update Road Runner localization
             drive.update();
 
-            // Print pose to telemetry
+            // Telemetry
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
-            telemetry.addData("heading", poseEstimate.getHeading());
+            telemetry.addData("heading (rad)", poseEstimate.getHeading());
+            telemetry.addData("heading (deg)", Math.toDegrees(poseEstimate.getHeading()));
             telemetry.update();
         }
-
     }
 }
