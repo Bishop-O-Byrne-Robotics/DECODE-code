@@ -2,6 +2,7 @@
 //
 //import android.util.Size;
 //
+//import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 //import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 //import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //import com.qualcomm.robotcore.hardware.DcMotor;
@@ -19,12 +20,13 @@
 //import org.firstinspires.ftc.vision.VisionPortal;
 //import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 //import org.firstinspires.ftc.vision.opencv.ColorRange;
-//import org.firstinspires.ftc.vision.opencv.ImageRegion;
+//import org.firstinspires.ftc.vision.opencv.ImageRegion;ыыч
 //import org.opencv.core.RotatedRect;
 //
-//import java.util.List;
+//import java.util.List;1
 //
 //@TeleOp(name = "TeleOp2425")
+//@Disabled
 //public class TeleOpBlue extends LinearOpMode {
 //
 //    double speedCoefficient = 0.75;
