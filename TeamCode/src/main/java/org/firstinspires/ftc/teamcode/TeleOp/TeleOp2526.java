@@ -7,6 +7,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 
@@ -23,6 +27,8 @@ public class TeleOp2526 extends LinearOpMode {
 
     DcMotor intakeRoller;
 
+    private VisionPortal visionPortal;
+    private AprilTagProcessor aprilTag;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -32,6 +38,18 @@ public class TeleOp2526 extends LinearOpMode {
 
         drive = new SampleMecanumDrive(hardwareMap);
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Create AprilTag processor
+        aprilTag = new AprilTagProcessor.Builder().build();
+
+        // Connect to Logitech webcam
+        visionPortal = new VisionPortal.Builder()
+                .setCamera(hardwareMap.get(WebcamName.class, "Gooncam 1"))
+                .addProcessor(aprilTag)
+                .build();
+
+        telemetry.addLine("Initialized — waiting for start");
+        telemetry.update();
 
         waitForStart();
 
@@ -55,6 +73,17 @@ public class TeleOp2526 extends LinearOpMode {
                     } else{
                         intakeRoller.setPower(0);
                     }
+                    AprilTagDetection tag = aprilTag.getDetections().get(0);
+
+                    double x = tag.ftcPose.x;      // forward/back distance (inches)
+                    double y = tag.ftcPose.y;      // left/right offset (inches)
+                    double heading = tag.ftcPose.yaw; // rotation (degrees)
+
+                    telemetry.addData("Tag ID", tag.id);
+                    telemetry.addData("X (Forward)", "%.2f in", x);
+                    telemetry.addData("Y (Strafe)", "%.2f in", y);
+                    telemetry.addData("Heading", "%.1f°", heading);
+
                     telemetry.update();
                 }
 
